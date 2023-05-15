@@ -1,30 +1,20 @@
-import { serve } from "https://deno.land/std/http/server.ts";
+import { Server } from "https://deno.land/std/http/server.ts";
 
-const PORT = 80;
-const TARGET = "https://example.com";
+const TARGET = "https://api.openai.com";
+const handler = async (request: Request) => {
 
-const server = serve({ port: PORT });
-
-console.log(`Proxy listening on port ${PORT}`);
-
-for await (const req of server) {
-  const url = new URL(req.url);
+  const url = new URL(request.url);
   const targetUrl = new URL(TARGET + url.pathname + url.search);
-
   const targetReq = await fetch(targetUrl.toString(), {
-    method: req.method,
-    headers: req.headers,
-    body: req.body,
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
   });
 
-  const headers = new Headers(targetReq.headers);
-  headers.set("access-control-allow-origin", "*");
+  return new Response(targetReq.body, { status: targetReq.status, headers: targetReq.headers });
+};
 
-  const body = new Uint8Array(await targetReq.arrayBuffer());
+const server = new Server({ handler });
+console.log("server listening on http://localhost:80");
 
-  req.respond({
-    status: targetReq.status,
-    headers: headers,
-    body: body,
-  });
-}
+await server.listenAndServe();
