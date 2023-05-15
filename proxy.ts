@@ -1,34 +1,30 @@
 import { serve } from "https://deno.land/std/http/server.ts";
 
-const targetUrl = "https://vekun.com";
-const port = 80;
+const PORT = 80;
+const TARGET = "https://example.com";
 
-const server = serve({ port });
-console.log(`HTTP proxy server running on http://localhost:${port}`);
+const server = serve({ port: PORT });
+
+console.log(`Proxy listening on port ${PORT}`);
 
 for await (const req of server) {
-  const url = new URL(targetUrl + req.url);
-  const proxyReqInit: RequestInit = {
+  const url = new URL(req.url);
+  const targetUrl = new URL(TARGET + url.pathname + url.search);
+
+  const targetReq = await fetch(targetUrl.toString(), {
     method: req.method,
     headers: req.headers,
     body: req.body,
-  };
+  });
 
-  try {
-    const response = await fetch(url, proxyReqInit);
-    const responseHeaders = new Headers(response.headers);
+  const headers = new Headers(targetReq.headers);
+  headers.set("access-control-allow-origin", "*");
 
-    req.respond({
-      status: response.status,
-      headers: responseHeaders,
-      body: response.body,
-    });
-  } catch (error) {
-    console.error("Error proxying request:", error);
+  const body = new Uint8Array(await targetReq.arrayBuffer());
 
-    req.respond({
-      status: 500,
-      body: "Internal Server Error",
-    });
-  }
+  req.respond({
+    status: targetReq.status,
+    headers: headers,
+    body: body,
+  });
 }
