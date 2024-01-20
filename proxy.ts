@@ -3,8 +3,8 @@ Deno.serve(async (req) => {
   return fetch("https://api.openai.com" + url.pathname, {
     method: req.method,
     headers: {
-      Authorization: req.headers.get('authorization'),
-      "Content-Type": "application/json"
+      Authorization: req.headers.get('Authorization'),
+      "Content-Type": req.headers.get('Content-Type')
     },
     body: req.body
   })
