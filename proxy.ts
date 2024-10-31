@@ -1,11 +1,13 @@
 Deno.serve(async (req) => {
   const url = new URL(req.url)
-  return fetch("https://api.openai.com" + url.pathname, {
+  url.hostname = 'api.openai.com'
+  return fetch(url, {
     method: req.method,
     headers: {
       Authorization: req.headers.get('Authorization'),
-      "Content-Type": req.headers.get('Content-Type')
+      'Content-Type': req.headers.get('Content-Type'),
+      'OpenAI-Beta': req.headers.get('OpenAI-Beta'),
     },
-    body: req.body
+    body: req.body,
   })
-});
+})
